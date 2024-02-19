@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet Map with Movable Marker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #app {
+            height: 400px;
+            width: 600px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <script>
+        // App component
+        async function createApp() {
+            const app = document.getElementById('app');
+
+            // Get current user location
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        const userLocation = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                        };
+
+                        console.log('User Location:', userLocation);
+
+                        const map = L.map(app).setView([userLocation.latitude, userLocation.longitude], 13);
+
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; OpenStreetMap contributors'
+                        }).addTo(map);
+
+                        let markerposition = L.marker([userLocation.latitude, userLocation.longitude], {
+                            draggable: true,
+                            icon: L.icon({
+                                iconUrl: "https://cdn-icons-png.flaticon.com/128/3082/3082383.png",
+                                iconSize: [48, 48],
+                                iconAnchor: [24, 48], // Adjusted anchor point
+                            }),
+                        }).addTo(map);
+
+                        markerposition.on('dragend', function (event) {
+                            const marker = event.target;
+                            const position = marker.getLatLng();
+                            console.log('New marker position: ' + position.lat + ', ' + position.lng);
+                            console.log(
+                                `https://www.google.com/maps?q=${position.lat},${position.lng}`
+                            );
+                        });
+
+                        map.on('click', function (event) {
+                            const { lat, lng } = event.latlng;
+                            map.removeLayer(markerposition);
+                            markerposition = L.marker([lat, lng], {
+                                draggable: true,
+                                icon: L.icon({
+                                    iconUrl: "https://cdn-icons-png.flaticon.com/128/3082/3082383.png",
+                                    iconSize: [48, 48],
+                                    iconAnchor: [24, 48], // Adjusted anchor point
+                                }),
+                            }).addTo(map);
+
+                            markerposition.on('dragend', function (event) {
+                                const marker = event.target;
+                                const position = marker.getLatLng();
+                                console.log('New marker position: ' + position.lat + ', ' + position.lng);
+                                console.log(
+                                    `https://www.google.com/maps?q=${position.lat},${position.lng}`
+                                );
+                            });
+
+                            markerposition.openPopup();
+                            console.log('Marker moved to:', lat, lng);
+                        });
+                    },
+                    (error) => {
+                        console.error('Error getting user location:', error);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                console.error('Geolocation is not supported by this browser.');
+            }
+        }
+
+        createApp();
+    </script>
+</body>
+
+</html>
